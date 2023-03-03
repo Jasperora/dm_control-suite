@@ -1,5 +1,5 @@
 # dm_control-suite
-### This refers to https://github.com/deepmind/dm_control, and it provides some custom skills.
+### This repo refers to https://github.com/deepmind/dm_control, and it provides some custom skills.
 ```
 @article{tunyasuvunakool2020,
          title = {dm_control: Software and tasks for continuous control},
