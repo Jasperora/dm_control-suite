@@ -48,6 +48,24 @@ def get_model_and_assets():
   """Returns a tuple containing the model XML string and a dict of assets."""
   return common.read_model('walker.xml'), common.ASSETS
 
+@SUITE.add("benchmarking")
+def slow(
+    time_limit=_DEFAULT_TIME_LIMIT,
+    xml_file_id=None,
+    random=None,
+    environment_kwargs=None,
+):
+    """Returns the Stand task."""
+    physics = Physics.from_xml_string(*get_model_and_assets())
+    task = HighKneeRunPlanarWalker(x_vel_limit=0.5, random=random)
+    environment_kwargs = environment_kwargs or {}
+    return control.Environment(
+        physics,
+        task,
+        time_limit=time_limit,
+        control_timestep=_CONTROL_TIMESTEP,
+        **environment_kwargs,
+    )
 
 @SUITE.add("benchmarking")
 def vel_1(
@@ -164,81 +182,6 @@ def vel_6(
         **environment_kwargs,
     )
 
-@SUITE.add("benchmarking")
-def vel_7(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=7, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_8(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=8, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_9(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=9, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_10(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=10, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
 
 class Physics(mujoco.Physics):
     """Physics simulation with additional features for the Walker domain."""
@@ -281,7 +224,8 @@ class HighKneeRunPlanarWalker(base.Task):
         self._angle_reward = 0.1
         self._ctrl_penalty = 1e-3
         self._foot_penalty = 0.01
-        self._height_penalty = 5
+        self._delta_h_penalty = 1 # 5 fails
+        self._walk_reward = 5
 
         self._min_height = 0.8
 
@@ -292,6 +236,8 @@ class HighKneeRunPlanarWalker(base.Task):
         self.named_geom_xpos_before = None
         self.named_geom_xpos_after = None
         self.action = None
+        self.leg_touch_gnd = None # the leg touch gnd (left, right, both)
+        self.leg_should_lift = "none" # the leg should lift
         
 
     def initialize_episode(self, physics):
@@ -385,17 +331,34 @@ class HighKneeRunPlanarWalker(base.Task):
 
         height = named_geom_xpos_after["torso","z"]
         angle = physics.data.qpos[2]
-        delta_h = physics.named.data.geom_xpos["torso","z"] - max(physics.named.data.geom_xpos["right_foot","z"], physics.named.data.geom_xpos["left_foot","z"])
+        delta_h = physics.named.data.geom_xpos["torso","z"] - max(physics.named.data.geom_xpos["right_thigh","z"], physics.named.data.geom_xpos["left_thigh","z"])
         nz = np.cos(angle)
         x_vel = physics.horizontal_velocity()
         x_vel = self._x_vel_limit - abs(x_vel - self._x_vel_limit)
         right_foot_vel = abs(right_foot_after - right_foot_before) / _CONTROL_TIMESTEP
         left_foot_vel = abs(left_foot_after - left_foot_before) / _CONTROL_TIMESTEP
+        
+        if physics.named.data.geom_xpos["right_foot","z"] < 0.1 and \
+            physics.named.data.geom_xpos["left_foot","z"] < 0.1:
+            self.leg_touch_gnd = "both"
+        elif physics.named.data.geom_xpos["right_foot","z"] < 0.1:
+            self.leg_touch_gnd = "right"
+        elif physics.named.data.geom_xpos["left_foot","z"] < 0.1:
+            self.leg_touch_gnd = "left"
+        else: # agent jump
+            self.leg_touch_gnd = "none"
+
+        # to determine which leg should be lifted initially
+        if self.leg_should_lift=="none":
+            if self.leg_touch_gnd=="left":
+                self.leg_should_lift = "right"
+            elif self.leg_touch_gnd=="right":
+                self.leg_should_lift = "left"
 
         # reward
         x_vel_reward = self._x_vel_reward * x_vel
         angle_reward = self._angle_reward * nz
-        height_penalty = -self._height_penalty * abs(delta_h)
+        delta_h_penalty = -self._delta_h_penalty * abs(delta_h)
         if self.action is None:
             ctrl_penalty = 0
         else:
@@ -403,21 +366,36 @@ class HighKneeRunPlanarWalker(base.Task):
         alive_reward = self._alive_reward
         foot_penalty = -self._foot_penalty * (right_foot_vel + left_foot_vel)
 
-        reward = x_vel_reward + angle_reward + height_penalty + \
-                ctrl_penalty + alive_reward + foot_penalty
+        if physics.named.data.geom_xpos["left_thigh","z"] > 1 and physics.named.data.geom_xpos["right_thigh","z"] < 0.75 and \
+            self.leg_should_lift=="left": # finish lift left leg
+            walk_reward = self._walk_reward
+            self.leg_should_lift = "right" # want it to lift right leg next
+        elif physics.named.data.geom_xpos["right_thigh","z"] > 1 and physics.named.data.geom_xpos["left_thigh","z"] < 0.75 and \
+            self.leg_should_lift=="right": # finish lift right leg
+            walk_reward = self._walk_reward
+            self.leg_should_lift = "left" # want it to lift left leg next
+        else: walk_reward = 0
+
+        reward = x_vel_reward + angle_reward + delta_h_penalty + \
+                ctrl_penalty + alive_reward + foot_penalty + walk_reward
                 
         # info = {
-        #     "x_vel_reward": x_vel_reward,
-        #     "angle_reward": angle_reward,
-        #     "height_penalty": height_penalty,
-        #     "ctrl_penalty": ctrl_penalty,
-        #     "alive_reward": alive_reward,
-        #     "foot_penalty": foot_penalty,
-        #     "reward": reward,
-        #     "delta_h_mean": delta_h,
-        #     "nz_mean": nz,
-        #     "x_vel_mean": (x_after - x_before) / _CONTROL_TIMESTEP,
-        #     "height_mean": height
+            # "x_vel_reward": x_vel_reward,
+            # "angle_reward": angle_reward,
+            # "delta_h_penalty": delta_h_penalty,
+            # "ctrl_penalty": ctrl_penalty,
+            # "alive_reward": alive_reward,
+            # "foot_penalty": foot_penalty,
+            # "walk_reward": walk_reward,
+            # "reward": reward,
+            # "delta_h_mean": delta_h,
+            # "nz_mean": nz,
+            # "x_vel": physics.horizontal_velocity(),
+            # "height_mean": height,
+            # "left_foot_z": physics.named.data.geom_xpos["left_foot","z"],
+            # "right_foot_z": physics.named.data.geom_xpos["right_foot","z"],
+            # "left_thigh_z": physics.named.data.geom_xpos["left_thigh","z"],
+            # "right_thigh_z": physics.named.data.geom_xpos["right_thigh","z"],
         # }
 
         # wandb.log(info)
