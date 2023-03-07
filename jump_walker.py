@@ -50,6 +50,25 @@ def get_model_and_assets():
 
 
 @SUITE.add("benchmarking")
+def slow(
+    time_limit=_DEFAULT_TIME_LIMIT,
+    xml_file_id=None,
+    random=None,
+    environment_kwargs=None,
+):
+    """Returns the Stand task."""
+    physics = Physics.from_xml_string(*get_model_and_assets())
+    task = JumpPlanarWalker(x_vel_limit=0.5, random=random)
+    environment_kwargs = environment_kwargs or {}
+    return control.Environment(
+        physics,
+        task,
+        time_limit=time_limit,
+        control_timestep=_CONTROL_TIMESTEP,
+        **environment_kwargs,
+    )
+
+@SUITE.add("benchmarking")
 def vel_1(
     time_limit=_DEFAULT_TIME_LIMIT,
     xml_file_id=None,
@@ -68,7 +87,6 @@ def vel_1(
         **environment_kwargs,
     )
 
-
 @SUITE.add("benchmarking")
 def vel_2(
     time_limit=_DEFAULT_TIME_LIMIT,
@@ -76,7 +94,7 @@ def vel_2(
     random=None,
     environment_kwargs=None,
 ):
-    """Returns the Walk task."""
+    """Returns the Stand task."""
     physics = Physics.from_xml_string(*get_model_and_assets())
     task = JumpPlanarWalker(x_vel_limit=2, random=random)
     environment_kwargs = environment_kwargs or {}
@@ -86,7 +104,7 @@ def vel_2(
         time_limit=time_limit,
         control_timestep=_CONTROL_TIMESTEP,
         **environment_kwargs,
-    )
+    )   
 
 @SUITE.add("benchmarking")
 def vel_3(
@@ -95,142 +113,9 @@ def vel_3(
     random=None,
     environment_kwargs=None,
 ):
-    """Returns the Run task."""
+    """Returns the Stand task."""
     physics = Physics.from_xml_string(*get_model_and_assets())
     task = JumpPlanarWalker(x_vel_limit=3, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_4(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=4, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_5(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=5, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_6(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=6, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_7(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=7, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_8(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=8, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_9(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=9, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_10(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = JumpPlanarWalker(x_vel_limit=10, random=random)
     environment_kwargs = environment_kwargs or {}
     return control.Environment(
         physics,
@@ -276,13 +161,17 @@ class JumpPlanarWalker(base.Task):
         self._x_vel_limit = x_vel_limit
         super(JumpPlanarWalker, self).__init__(random=random)
         self.random_seed = random
-        self._x_vel_reward = 2
-        self._alive_reward = 2
+        self._x_vel_reward = 1 # change this from 2 to 1
+        self._alive_reward = 3 # change this from 1 to 3
         self._angle_reward = 0.1
         self._ctrl_penalty = 1e-3
         self._foot_penalty = 0.01
-        self._height_penalty = 1
-        self._foot_diff_penalty = 7
+        self._delta_h_penalty = 1
+        self._foot_diff_penalty = 1 # change this from 7 to 5
+        self._thigh_diff_penalty = 1
+        self._leg_diff_penalty = 1
+        # self._jump_reward = 5
+        self._not_jump_penalty = 3
 
         self._min_height = 0.8
 
@@ -394,11 +283,16 @@ class JumpPlanarWalker(base.Task):
         left_foot_vel = abs(left_foot_after - left_foot_before) / _CONTROL_TIMESTEP
         foot_diff = abs(physics.named.data.geom_xpos["right_foot","x"]-physics.named.data.geom_xpos["left_foot","x"]) + \
             abs(physics.named.data.geom_xpos["right_foot","z"]-physics.named.data.geom_xpos["left_foot","z"])
+        thigh_diff = abs(physics.named.data.geom_xpos["right_thigh","x"]-physics.named.data.geom_xpos["left_thigh","x"]) + \
+            abs(physics.named.data.geom_xpos["right_thigh","z"]-physics.named.data.geom_xpos["left_thigh","z"])
+        leg_diff = abs(physics.named.data.geom_xpos["right_leg","x"]-physics.named.data.geom_xpos["left_leg","x"]) + \
+            abs(physics.named.data.geom_xpos["right_leg","z"]-physics.named.data.geom_xpos["left_leg","z"])
+        leg_to_gnd = min(physics.named.data.geom_xpos["right_foot","z"],physics.named.data.geom_xpos["left_foot","z"])
 
         # reward
         x_vel_reward = self._x_vel_reward * x_vel
         angle_reward = self._angle_reward * nz
-        height_penalty = -self._height_penalty * abs(1.1 - delta_h)
+        delta_h_penalty = -self._delta_h_penalty * abs(1.1 - delta_h)
         if self.action is None:
             ctrl_penalty = 0
         else:
@@ -406,24 +300,38 @@ class JumpPlanarWalker(base.Task):
         alive_reward = self._alive_reward
         foot_penalty = -self._foot_penalty * (right_foot_vel + left_foot_vel)
         foot_diff_penalty = -self._foot_diff_penalty * foot_diff
+        thigh_diff_penalty = -self._thigh_diff_penalty * thigh_diff
+        leg_diff_penalty = -self._leg_diff_penalty * leg_diff
 
-        reward = x_vel_reward + angle_reward + height_penalty + \
-                ctrl_penalty + alive_reward + foot_penalty + foot_diff_penalty
+        # encourage agent to jump (torso condition may not be needed)
+        # if physics.named.data.geom_xpos["torso","z"] > 1.3 and physics.named.data.geom_xpos["right_foot","z"] > 0.35 and \
+        #     physics.named.data.geom_xpos["left_foot","z"] > 0.35:
+        #     jump_reward = self._jump_reward
+        # else:
+        #     jump_reward = 0
+
+        not_jump_penalty = -self._not_jump_penalty * abs(1 - leg_to_gnd)
+
+        reward = x_vel_reward + angle_reward + delta_h_penalty + ctrl_penalty + alive_reward + \
+                 foot_penalty + foot_diff_penalty + thigh_diff_penalty + leg_diff_penalty + not_jump_penalty
                 
-        # info = {
-        #     "x_vel_reward": x_vel_reward,
-        #     "angle_reward": angle_reward,
-        #     "height_penalty": height_penalty,
-        #     "ctrl_penalty": ctrl_penalty,
-        #     "alive_reward": alive_reward,
-        #     "foot_penalty": foot_penalty,
-        #     "reward": reward,
-        #     "delta_h_mean": delta_h,
-        #     "nz_mean": nz,
-        #     "x_vel_mean": (x_after - x_before) / _CONTROL_TIMESTEP,
-        #     "height_mean": height
-        # }
+        info = {
+            # "x_vel_reward": x_vel_reward,
+            # "angle_reward": angle_reward,
+            # "delta_h_penalty": delta_h_penalty,
+            # "ctrl_penalty": ctrl_penalty,
+            # "alive_reward": alive_reward,
+            # "foot_penalty": foot_penalty,
+            # "foot_diff_penalty": foot_diff_penalty,
+            # "jump_reward": jump_reward,
+            "not_jump_penalty" : not_jump_penalty,
+            # "reward": reward,
+            # "delta_h_mean": delta_h,
+            # "nz_mean": nz,
+            # "x_vel_mean": physics.horizontal_velocity(),
+            "height_mean": height,
+        }
 
-        # wandb.log(info)
+        wandb.log(info)
 
         return reward

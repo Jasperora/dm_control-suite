@@ -164,81 +164,6 @@ def vel_6(
         **environment_kwargs,
     )
 
-@SUITE.add("benchmarking")
-def vel_7(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = FrogJumpPlanarWalker(x_vel_limit=7, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_8(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = FrogJumpPlanarWalker(x_vel_limit=8, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_9(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = FrogJumpPlanarWalker(x_vel_limit=9, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
-
-@SUITE.add("benchmarking")
-def vel_10(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = FrogJumpPlanarWalker(x_vel_limit=10, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
 
 class Physics(mujoco.Physics):
     """Physics simulation with additional features for the Walker domain."""
@@ -282,10 +207,14 @@ class FrogJumpPlanarWalker(base.Task):
         self._ctrl_penalty = 1e-3
         self._foot_penalty = 0.01
         self._height_reward = 1
-        self._foot_diff_reward = 3
-        self._jump_reward = 3
-        self._height_diff_reward = 3
+        self._foot_diff_penalty = 1
+        self._thigh_diff_penalty = 1
+        self._leg_diff_penalty = 1
+        # self._jump_reward = 3
+        self._not_jump_penalty = 2
+        self._height_diff_reward = 1
         self._thigh_foot_reward = 2
+        self._squat_reward = 4
 
         self._min_height = 0.1
 
@@ -296,6 +225,7 @@ class FrogJumpPlanarWalker(base.Task):
         self.named_geom_xpos_before = None
         self.named_geom_xpos_after = None
         self.action = None
+        self.jump = False
         
 
     def initialize_episode(self, physics):
@@ -396,9 +326,12 @@ class FrogJumpPlanarWalker(base.Task):
         x_vel = self._x_vel_limit - abs(x_vel - self._x_vel_limit)
         right_foot_vel = abs(right_foot_after - right_foot_before) / _CONTROL_TIMESTEP
         left_foot_vel = abs(left_foot_after - left_foot_before) / _CONTROL_TIMESTEP
+        leg_diff = abs(physics.named.data.geom_xpos["right_leg","x"]-physics.named.data.geom_xpos["left_leg","x"]) + \
+            abs(physics.named.data.geom_xpos["right_leg","z"]-physics.named.data.geom_xpos["left_leg","z"])
         foot_diff = abs(physics.named.data.geom_xpos["right_foot","x"]-physics.named.data.geom_xpos["left_foot","x"]) + \
-            abs(physics.named.data.geom_xpos["right_foot","y"]-physics.named.data.geom_xpos["left_foot","y"]) + \
             abs(physics.named.data.geom_xpos["right_foot","z"]-physics.named.data.geom_xpos["left_foot","z"])
+        thigh_diff = abs(physics.named.data.geom_xpos["right_thigh","x"]-physics.named.data.geom_xpos["left_thigh","x"]) + \
+            abs(physics.named.data.geom_xpos["right_thigh","z"]-physics.named.data.geom_xpos["left_thigh","z"])
         height_diff = abs(height - height_before)
 
         # reward
@@ -411,23 +344,41 @@ class FrogJumpPlanarWalker(base.Task):
             ctrl_penalty = -self._ctrl_penalty * np.sum(np.square(self.action))
         alive_reward = self._alive_reward
         foot_penalty = -self._foot_penalty * (right_foot_vel + left_foot_vel)
-        foot_diff_reward = -self._foot_diff_reward * foot_diff
+        leg_diff_penalty = -self._leg_diff_penalty * leg_diff
+        foot_diff_penalty = -self._foot_diff_penalty * foot_diff
+        thigh_diff_penalty = -self._thigh_diff_penalty * thigh_diff
         height_diff_reward = self._height_diff_reward * height_diff
-        if height >= 1.6:
-            jump_reward = self._config["jump_reward"]
-        else:
-            jump_reward = 0
+        # if physics.named.data.geom_xpos["torso","z"] > 1.4 and physics.named.data.geom_xpos["right_foot","z"] > 0.35 and \
+        #     physics.named.data.geom_xpos["left_foot","z"] > 0.35:
+            # jump_reward = self._jump_reward * physics.named.data.geom_xpos["torso","z"]
+        # else:
+        #     jump_reward = 0
+
+        not_jump_penalty = -self._not_jump_penalty * abs(1 - min(physics.named.data.geom_xpos["right_foot","z"], physics.named.data.geom_xpos["left_foot","z"]))
+
         if physics.named.data.geom_xpos["right_thigh","z"] > physics.named.data.geom_xpos["right_foot","z"] and \
             physics.named.data.geom_xpos["left_thigh","z"] > physics.named.data.geom_xpos["left_foot","z"]:
             thigh_foot_reward = self._thigh_foot_reward
         else:
             thigh_foot_reward = 0
+        
+        if (physics.named.data.geom_xpos["torso","z"] > 1.35 and physics.named.data.geom_xpos["right_foot","z"] > 0.35 and \
+            physics.named.data.geom_xpos["left_foot","z"] > 0.35) or self.jump==True:
+            self.jump = True
+        else:
+            self.jump = False
 
-        reward = x_vel_reward + angle_reward + height_reward + jump_reward + \
-                ctrl_penalty + alive_reward + foot_penalty + foot_diff_reward + \
-                height_diff_reward + thigh_foot_reward
+        if self.jump and physics.named.data.geom_xpos["torso","z"] < 0.7:
+            squat_reward = self._squat_reward
+            self.jump = False
+        else:
+            squat_reward = 0      
+
+        reward = x_vel_reward + angle_reward + height_reward + not_jump_penalty + \
+                ctrl_penalty + alive_reward + foot_penalty + leg_diff_penalty + foot_diff_penalty + \
+                thigh_diff_penalty + height_diff_reward + thigh_foot_reward + squat_reward
                 
-        # info = {
+        info = {
         #     "x_vel_reward": x_vel_reward,
         #     "angle_reward": angle_reward,
         #     "height_reward": height_reward,
@@ -438,8 +389,10 @@ class FrogJumpPlanarWalker(base.Task):
         #     "delta_h_mean": delta_h,
         #     "nz_mean": nz,
         #     "x_vel_mean": (x_after - x_before) / _CONTROL_TIMESTEP,
-        #     "height_mean": height
-        # }
+            "height_mean": height,
+            "left_foot_z": physics.named.data.geom_xpos["left_foot","z"],
+            "right_foot_z": physics.named.data.geom_xpos["right_foot","z"],
+        }
 
         # wandb.log(info)
 

@@ -106,81 +106,81 @@ def vel_2(
         **environment_kwargs,
     )
 
-@SUITE.add("benchmarking")
-def vel_3(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=3, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
+# @SUITE.add("benchmarking")
+# def vel_3(
+#     time_limit=_DEFAULT_TIME_LIMIT,
+#     xml_file_id=None,
+#     random=None,
+#     environment_kwargs=None,
+# ):
+#     """Returns the Run task."""
+#     physics = Physics.from_xml_string(*get_model_and_assets())
+#     task = HighKneeRunPlanarWalker(x_vel_limit=3, random=random)
+#     environment_kwargs = environment_kwargs or {}
+#     return control.Environment(
+#         physics,
+#         task,
+#         time_limit=time_limit,
+#         control_timestep=_CONTROL_TIMESTEP,
+#         **environment_kwargs,
+#     )
 
-@SUITE.add("benchmarking")
-def vel_4(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=4, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
+# @SUITE.add("benchmarking")
+# def vel_4(
+#     time_limit=_DEFAULT_TIME_LIMIT,
+#     xml_file_id=None,
+#     random=None,
+#     environment_kwargs=None,
+# ):
+#     """Returns the Run task."""
+#     physics = Physics.from_xml_string(*get_model_and_assets())
+#     task = HighKneeRunPlanarWalker(x_vel_limit=4, random=random)
+#     environment_kwargs = environment_kwargs or {}
+#     return control.Environment(
+#         physics,
+#         task,
+#         time_limit=time_limit,
+#         control_timestep=_CONTROL_TIMESTEP,
+#         **environment_kwargs,
+#     )
 
-@SUITE.add("benchmarking")
-def vel_5(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=5, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
+# @SUITE.add("benchmarking")
+# def vel_5(
+#     time_limit=_DEFAULT_TIME_LIMIT,
+#     xml_file_id=None,
+#     random=None,
+#     environment_kwargs=None,
+# ):
+#     """Returns the Run task."""
+#     physics = Physics.from_xml_string(*get_model_and_assets())
+#     task = HighKneeRunPlanarWalker(x_vel_limit=5, random=random)
+#     environment_kwargs = environment_kwargs or {}
+#     return control.Environment(
+#         physics,
+#         task,
+#         time_limit=time_limit,
+#         control_timestep=_CONTROL_TIMESTEP,
+#         **environment_kwargs,
+#     )
 
-@SUITE.add("benchmarking")
-def vel_6(
-    time_limit=_DEFAULT_TIME_LIMIT,
-    xml_file_id=None,
-    random=None,
-    environment_kwargs=None,
-):
-    """Returns the Run task."""
-    physics = Physics.from_xml_string(*get_model_and_assets())
-    task = HighKneeRunPlanarWalker(x_vel_limit=6, random=random)
-    environment_kwargs = environment_kwargs or {}
-    return control.Environment(
-        physics,
-        task,
-        time_limit=time_limit,
-        control_timestep=_CONTROL_TIMESTEP,
-        **environment_kwargs,
-    )
+# @SUITE.add("benchmarking")
+# def vel_6(
+#     time_limit=_DEFAULT_TIME_LIMIT,
+#     xml_file_id=None,
+#     random=None,
+#     environment_kwargs=None,
+# ):
+#     """Returns the Run task."""
+#     physics = Physics.from_xml_string(*get_model_and_assets())
+#     task = HighKneeRunPlanarWalker(x_vel_limit=6, random=random)
+#     environment_kwargs = environment_kwargs or {}
+#     return control.Environment(
+#         physics,
+#         task,
+#         time_limit=time_limit,
+#         control_timestep=_CONTROL_TIMESTEP,
+#         **environment_kwargs,
+#     )
 
 
 class Physics(mujoco.Physics):
