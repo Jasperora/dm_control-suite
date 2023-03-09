@@ -46,9 +46,9 @@ from dm_control.suite import forward_walker
 from dm_control.suite import backward_walker
 from dm_control.suite import crawl_walker
 from dm_control.suite import high_knee_run_walker
-from dm_control.suite import high_knee_run_walker2
+# from dm_control.suite import high_knee_run_walker2
 from dm_control.suite import jump_walker
-from dm_control.suite import frog_jump_walker
+# from dm_control.suite import frog_jump_walker
 
 # Find all domains imported.
 _DOMAINS = {name: module for name, module in locals().items()
